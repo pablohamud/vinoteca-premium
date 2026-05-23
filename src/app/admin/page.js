@@ -18,9 +18,18 @@ export default function AdminPage() {
     winery: "",
     varietal: "",
     terroir: "",
+    winemaker: "",
+    country: "",
+    province: "",
+    vintage: "",
+    alcohol: "",
+    stock: "",
+    volume: "",
+    tasting_notes: "",
     price: "",
     image_url: "",
     featured: false,
+    category: "vino",
   });
   const [loading, setLoading] = useState(false);
 
@@ -60,17 +69,26 @@ export default function AdminPage() {
     setLoading(true);
     const { error } = await supabase.from("wines").insert([{
       name: form.name,
+      vintage: form.vintage,
       winery: form.winery,
       varietal: form.varietal,
+      winemaker: form.winemaker,
       terroir: form.terroir,
+      province: form.province,
+      country: form.country,
+      alcohol: form.alcohol,
+      volume: form.volume,
+      tasting_notes: form.tasting_notes,
+      stock: Number(form.stock),
       price: Number(form.price),
       image_url: form.image_url,
       featured: form.featured,
+      category: form.category,
     }]);
     setLoading(false);
     if (error) { alert(error.message); return; }
     alert("Vino guardado 🍷");
-    setForm({ name: "", winery: "", varietal: "", terroir: "", price: "", image_url: "", featured: false });
+    setForm({ name: "", winery: "", varietal: "", terroir: "", winemaker: "", country: "", province: "", vintage: "", alcohol: "", stock: "", volume: "", tasting_notes: "", price: "", image_url: "", featured: false, category: "vino" });
     fetchWines();
   }
 
@@ -125,19 +143,60 @@ export default function AdminPage() {
     <main className="min-h-screen bg-black text-white p-10">
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-5xl font-bold text-[#d4a65a]">Panel Administrador</h1>
-        <button onClick={logout} className="bg-red-700 px-4 py-2 rounded-xl">
-          Salir
-        </button>
+        <div className="flex gap-3">
+          <a
+            href="https://escudowines.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white/10 hover:bg-white/20 transition px-5 py-2 rounded-xl text-sm"
+          >
+            🌐 EscudoWines
+          </a>
+          <a href="/admin/planes" className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-5 py-2 rounded-xl text-sm transition">
+            👑 Planes del Club
+          </a>
+          <button onClick={logout} className="bg-red-700 px-4 py-2 rounded-xl">
+            Salir
+          </button>
+        </div>
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-3xl mb-16">
-        <h2 className="text-2xl font-semibold mb-6">Cargar nuevo vino</h2>
+        <h2 className="text-2xl font-semibold mb-6">Cargar nuevo producto</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+          >
+            <option value="vino">🍷 Vino</option>
+            <option value="espumante">🥂 Espumante</option>
+            <option value="whisky">🥃 Whisky</option>
+            <option value="gin">🍸 Gin</option>
+            <option value="copa">🍷 Copa</option>
+            <option value="accesorio">🛠️ Accesorio</option>
+            <option value="pack">🎁 Pack</option>
+            <option value="vodka">🍸 Vodka</option>
+            <option value="ron">🥃 Ron</option>
+            <option value="tequila">🌵 Tequila</option>
+            <option value="licor">🍹 Licor</option>
+            <option value="cerveza">🍺 Cerveza</option>
+            <option value="champagne">🍾 Champagne</option>
+            <option value="delicatessen">🧀 Delicatessen</option>
+            <option value="gift">🎁 Gift Box</option>
+            <option value="decanter">🏺 Decanter</option>
+            <option value="sacacorchos">🛠️ Sacacorchos</option>
+            <option value="cuchillo">🔪 Cuchillo</option>
+            <option value="tabla">🪵 Tabla</option>
+            <option value="experiencia">✨ Experiencia</option>
+            <option value="fiambre">🥩 Fiambre</option>
+            <option value="club">👑 Club Exclusivo</option>
+          </select>
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Nombre del vino"
+            placeholder="Marca"
           />
           <input
             value={form.winery}
@@ -152,10 +211,52 @@ export default function AdminPage() {
             placeholder="Varietal"
           />
           <input
+            value={form.vintage}
+            onChange={(e) => setForm({ ...form, vintage: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Añada"
+          />
+          <input
+            value={form.winemaker}
+            onChange={(e) => setForm({ ...form, winemaker: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Enólogo"
+          />
+          <input
+            value={form.alcohol}
+            onChange={(e) => setForm({ ...form, alcohol: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Alcohol"
+          />
+          <input
+            value={form.tasting_notes}
+            onChange={(e) => setForm({ ...form, tasting_notes: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Notas de Cata"
+          />
+          <input
             value={form.terroir}
             onChange={(e) => setForm({ ...form, terroir: e.target.value })}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
             placeholder="Terroir"
+          />
+          <input
+            value={form.province}
+            onChange={(e) => setForm({ ...form, province: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Provincia"
+          />
+          <input
+            value={form.country}
+            onChange={(e) => setForm({ ...form, country: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="País"
+          />
+          <input
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            className="w-full p-4 rounded-2xl bg-black border border-white/10"
+            placeholder="Stock"
           />
           <input
             type="number"
@@ -179,7 +280,6 @@ export default function AdminPage() {
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           />
 
-          {/* CHECKBOX RECOMENDADO */}
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -194,7 +294,7 @@ export default function AdminPage() {
             disabled={loading}
             className="bg-[#7b1125] px-6 py-4 rounded-2xl"
           >
-            {loading ? "Guardando..." : "Guardar vino"}
+            {loading ? "Guardando..." : "Guardar producto"}
           </button>
         </form>
       </div>
@@ -215,8 +315,6 @@ export default function AdminPage() {
             <div className="p-6">
               <h3 className="text-2xl font-bold text-[#d4a65a]">{wine.name}</h3>
               <p className="text-white/70 mt-2">{wine.winery}</p>
-
-              {/* TOGGLE RECOMENDADO EN TARJETA */}
               <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -226,7 +324,6 @@ export default function AdminPage() {
                 />
                 <span className="text-white/70 text-sm">⭐ Recomendado</span>
               </label>
-
               <button
                 onClick={() => deleteWine(wine.id)}
                 className="mt-4 bg-red-700 px-4 py-2 rounded-xl"
