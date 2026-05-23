@@ -14,6 +14,7 @@ export default function Home() {
   const [varietal, setVarietal] = useState("");
   const [terroir, setTerroir] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [searching, setSearching] = useState(false);
 
   // --- CARRITO ---
   const [cart, setCart] = useState([]);
@@ -94,6 +95,12 @@ export default function Home() {
     }
   }
 
+  // Vinos recomendados (featured)
+  const featuredWines = wines.filter((wine) => wine.featured);
+
+  // Filtros activos
+  const hasFilters = search !== "" || varietal !== "" || terroir !== "" || maxPrice !== "";
+
   const filteredWines = wines.filter((wine) => {
     return (
       wine.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -102,6 +109,38 @@ export default function Home() {
       (maxPrice === "" || wine.price <= Number(maxPrice))
     );
   });
+
+  // Tarjeta de vino reutilizable
+  function WineCard({ wine }) {
+    return (
+      <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:scale-105 transition duration-300 flex flex-col">
+        {wine.image_url && (
+          <img
+            src={wine.image_url}
+            alt={wine.name}
+            className="w-full h-80 object-cover"
+          />
+        )}
+        <div className="p-6 flex flex-col flex-1">
+          <h2 className="text-2xl font-bold text-[#d4a65a]">{wine.name}</h2>
+          <p className="text-white/70 mt-2">{wine.winery}</p>
+          <div className="mt-4 flex justify-between items-center">
+            <span className="text-sm bg-[#7b1125] px-3 py-1 rounded-full">
+              {wine.varietal}
+            </span>
+            <span className="font-bold text-xl">${wine.price}</span>
+          </div>
+          <p className="mt-4 text-white/60 text-sm">{wine.terroir}</p>
+          <button
+            onClick={() => addToCart(wine)}
+            className="mt-6 w-full bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold py-3 rounded-2xl transition"
+          >
+            Agregar al carrito
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-black text-white p-10">
@@ -131,7 +170,7 @@ export default function Home() {
       </div>
 
       {/* FILTROS */}
-      <div className="grid md:grid-cols-4 gap-4 mt-10">
+      <div className="grid md:grid-cols-4 gap-4 mb-12">
         <input
           type="text"
           placeholder="Buscar vino"
@@ -162,61 +201,52 @@ export default function Home() {
         />
       </div>
 
-      {/* VINOS */}
-      <div className="grid md:grid-cols-3 gap-8 mt-10">
-        {filteredWines.map((wine) => (
-          <div
-            key={wine.id}
-            className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:scale-105 transition duration-300 flex flex-col"
-          >
-            {wine.image_url && (
-              <img
-                src={wine.image_url}
-                alt={wine.name}
-                className="w-full h-80 object-cover"
-              />
-            )}
-            <div className="p-6 flex flex-col flex-1">
-              <h2 className="text-2xl font-bold text-[#d4a65a]">
-                {wine.name}
-              </h2>
-              <p className="text-white/70 mt-2">{wine.winery}</p>
-              <div className="mt-4 flex justify-between items-center">
-                <span className="text-sm bg-[#7b1125] px-3 py-1 rounded-full">
-                  {wine.varietal}
-                </span>
-                <span className="font-bold text-xl">${wine.price}</span>
-              </div>
-              <p className="mt-4 text-white/60 text-sm">{wine.terroir}</p>
-
-              {/* BOTÓN AGREGAR AL CARRITO */}
-              <button
-                onClick={() => addToCart(wine)}
-                className="mt-6 w-full bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold py-3 rounded-2xl transition"
-              >
-                Agregar al carrito
-              </button>
-            </div>
+      {/* SI HAY FILTROS ACTIVOS: mostrar resultados */}
+      {hasFilters ? (
+        <>
+          <h2 className="text-3xl font-bold text-white/80 mb-8">
+            Resultados de búsqueda
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {filteredWines.map((wine) => (
+              <WineCard key={wine.id} wine={wine} />
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* SIN RESULTADOS */}
-      {filteredWines.length === 0 && (
-        <div className="text-center mt-20 text-white/50 text-2xl">
-          No se encontraron vinos 🍷
-        </div>
+          {filteredWines.length === 0 && (
+            <div className="text-center mt-20 text-white/50 text-2xl">
+              No se encontraron vinos 🍷
+            </div>
+          )}
+        </>
+      ) : (
+        /* SI NO HAY FILTROS: mostrar solo recomendados */
+        <>
+          {featuredWines.length > 0 ? (
+            <>
+              <h2 className="text-3xl font-bold text-[#d4a65a] mb-8">
+                ⭐ Recomendados
+              </h2>
+              <div className="grid md:grid-cols-3 gap-8">
+                {featuredWines.map((wine) => (
+                  <WineCard key={wine.id} wine={wine} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center mt-20 text-white/50 text-2xl">
+              Usá el buscador para encontrar vinos 🍷
+            </div>
+          )}
+        </>
       )}
 
       {/* DRAWER CARRITO */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 flex">
-          {/* Overlay */}
           <div
             className="flex-1 bg-black/60 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}
           />
-          {/* Panel */}
           <div className="w-full max-w-md bg-[#111] border-l border-white/10 flex flex-col h-full overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-white/10">
               <h2 className="text-2xl font-bold text-[#d4a65a]">
