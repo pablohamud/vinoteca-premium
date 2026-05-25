@@ -13,7 +13,10 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [wines, setWines] = useState([]);
-  const [form, setForm] = useState({
+  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const emptyForm = {
     name: "",
     winery: "",
     varietal: "",
@@ -30,23 +33,39 @@ export default function AdminPage() {
     image_url: "",
     featured: false,
     category: "vino",
-  });
-  const [loading, setLoading] = useState(false);
+  };
+
+  const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
     checkSession();
   }, []);
 
   async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     setSession(session);
-    if (session) fetchWines();
+
+    if (session) {
+      fetchWines();
+    }
   }
 
   async function login(e) {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { alert(error.message); return; }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     checkSession();
   }
 
@@ -60,52 +79,125 @@ export default function AdminPage() {
       .from("wines")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) { console.log(error); return; }
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
     setWines(data);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     setLoading(true);
-    const { error } = await supabase.from("wines").insert([{
+
+    const productData = {
       name: form.name,
-      vintage: form.vintage,
       winery: form.winery,
       varietal: form.varietal,
-      winemaker: form.winemaker,
       terroir: form.terroir,
-      province: form.province,
+      winemaker: form.winemaker,
       country: form.country,
+      province: form.province,
+      vintage: form.vintage,
       alcohol: form.alcohol,
+      stock: Number(form.stock),
       volume: form.volume,
       tasting_notes: form.tasting_notes,
-      stock: Number(form.stock),
       price: Number(form.price),
       image_url: form.image_url,
       featured: form.featured,
       category: form.category,
-    }]);
+    };
+
+    let error;
+
+    if (editingId) {
+      const response = await supabase
+        .from("wines")
+        .update(productData)
+        .eq("id", editingId);
+
+      error = response.error;
+    } else {
+      const response = await supabase
+        .from("wines")
+        .insert([productData]);
+
+      error = response.error;
+    }
+
     setLoading(false);
-    if (error) { alert(error.message); return; }
-    alert("Vino guardado 🍷");
-    setForm({ name: "", winery: "", varietal: "", terroir: "", winemaker: "", country: "", province: "", vintage: "", alcohol: "", stock: "", volume: "", tasting_notes: "", price: "", image_url: "", featured: false, category: "vino" });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert(editingId ? "Producto actualizado ✅" : "Producto guardado 🍷");
+
+    setForm(emptyForm);
+    setEditingId(null);
+
     fetchWines();
+  }
+
+  function editWine(wine) {
+    setEditingId(wine.id);
+
+    setForm({
+      name: wine.name || "",
+      winery: wine.winery || "",
+      varietal: wine.varietal || "",
+      terroir: wine.terroir || "",
+      winemaker: wine.winemaker || "",
+      country: wine.country || "",
+      province: wine.province || "",
+      vintage: wine.vintage || "",
+      alcohol: wine.alcohol || "",
+      stock: wine.stock || "",
+      volume: wine.volume || "",
+      tasting_notes: wine.tasting_notes || "",
+      price: wine.price || "",
+      image_url: wine.image_url || "",
+      featured: wine.featured || false,
+      category: wine.category || "vino",
+    });
   }
 
   async function toggleFeatured(wine) {
     const { error } = await supabase
       .from("wines")
-      .update({ featured: !wine.featured })
+      .update({
+        featured: !wine.featured,
+      })
       .eq("id", wine.id);
-    if (error) { alert(error.message); return; }
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     fetchWines();
   }
 
   async function deleteWine(id) {
-    const confirmDelete = confirm("¿Eliminar este vino?");
+    const confirmDelete = confirm("¿Eliminar este producto?");
+
     if (!confirmDelete) return;
-    const { error } = await supabase.from("wines").delete().eq("id", id);
-    if (error) { alert(error.message); return; }
+
+    const { error } = await supabase
+      .from("wines")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
     fetchWines();
   }
 
@@ -116,7 +208,10 @@ export default function AdminPage() {
           onSubmit={login}
           className="bg-white/5 border border-white/10 rounded-3xl p-10 w-full max-w-md space-y-4"
         >
-          <h1 className="text-4xl font-bold text-[#d4a65a] mb-6">Admin Login</h1>
+          <h1 className="text-4xl font-bold text-[#d4a65a] mb-6">
+            Admin Login
+          </h1>
+
           <input
             type="email"
             placeholder="Email"
@@ -124,6 +219,7 @@ export default function AdminPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           />
+
           <input
             type="password"
             placeholder="Contraseña"
@@ -131,6 +227,7 @@ export default function AdminPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           />
+
           <button className="w-full bg-[#7b1125] py-4 rounded-2xl">
             Ingresar
           </button>
@@ -142,160 +239,121 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-black text-white p-10">
       <div className="flex justify-between items-center mb-10">
-        <h1 className="text-5xl font-bold text-[#d4a65a]">Panel Administrador</h1>
-        <div className="flex gap-3">
-          <a
-            href="https://escudowines.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-white/10 hover:bg-white/20 transition px-5 py-2 rounded-xl text-sm"
-          >
-            🌐 EscudoWines
-          </a>
-          <a href="/admin/planes" className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-5 py-2 rounded-xl text-sm transition">
-            👑 Planes del Club
-          </a>
-          <button onClick={logout} className="bg-red-700 px-4 py-2 rounded-xl">
-            Salir
-          </button>
-        </div>
+        <h1 className="text-5xl font-bold text-[#d4a65a]">
+          Panel Administrador
+        </h1>
+
+        <button
+          onClick={logout}
+          className="bg-red-700 px-4 py-2 rounded-xl"
+        >
+          Salir
+        </button>
       </div>
 
       <div className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-3xl mb-16">
-        <h2 className="text-2xl font-semibold mb-6">Cargar nuevo producto</h2>
+        <h2 className="text-2xl font-semibold mb-6">
+          {editingId ? "Editar producto" : "Cargar nuevo producto"}
+        </h2>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <select
             value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, category: e.target.value })
+            }
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           >
             <option value="vino">🍷 Vino</option>
-            <option value="Membresía">👑Membresía</option>
+            <option value="Membresía">👑 Membresía</option>
             <option value="espumante">🥂 Espumante</option>
             <option value="whisky">🥃 Whisky</option>
             <option value="gin">🍸 Gin</option>
-            <option value="copa">🍷 Copa</option>
-            <option value="accesorio">🛠️ Accesorio</option>
             <option value="pack">🎁 Pack</option>
-            <option value="vodka">🍸 Vodka</option>
-            <option value="ron">🥃 Ron</option>
-            <option value="tequila">🌵 Tequila</option>
-            <option value="licor">🍹 Licor</option>
-            <option value="cerveza">🍺 Cerveza</option>
-            <option value="champagne">🍾 Champagne</option>
-            <option value="delicatessen">🧀 Delicatessen</option>
-            <option value="gift">🎁 Gift Box</option>
-            <option value="decanter">🏺 Decanter</option>
-            <option value="sacacorchos">🛠️ Sacacorchos</option>
-            <option value="cuchillo">🔪 Cuchillo</option>
-            <option value="tabla">🪵 Tabla</option>
-            <option value="experiencia">✨ Experiencia</option>
-            <option value="fiambre">🥩 Fiambre</option>
             <option value="club">👑 Club de Catas</option>
           </select>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Marca"
-          />
-          <input
-            value={form.winery}
-            onChange={(e) => setForm({ ...form, winery: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Bodega"
-          />
-          <input
-            value={form.varietal}
-            onChange={(e) => setForm({ ...form, varietal: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Varietal"
-          />
-          <input
-            value={form.vintage}
-            onChange={(e) => setForm({ ...form, vintage: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Añada"
-          />
-          <input
-            value={form.winemaker}
-            onChange={(e) => setForm({ ...form, winemaker: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Enólogo"
-          />
-          <input
-            value={form.alcohol}
-            onChange={(e) => setForm({ ...form, alcohol: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Alcohol"
-          />
-          <input
-            value={form.tasting_notes}
-            onChange={(e) => setForm({ ...form, tasting_notes: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Notas de Cata"
-          />
-          <input
-            value={form.terroir}
-            onChange={(e) => setForm({ ...form, terroir: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Terroir"
-          />
-          <input
-            value={form.province}
-            onChange={(e) => setForm({ ...form, province: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Provincia"
-          />
-          <input
-            value={form.country}
-            onChange={(e) => setForm({ ...form, country: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="País"
-          />
-          <input
-            value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Stock"
-          />
-          <input
-            type="number"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-            className="w-full p-4 rounded-2xl bg-black border border-white/10"
-            placeholder="Precio"
-          />
+
+          {Object.keys(form).map((key) => {
+            if (
+              key === "featured" ||
+              key === "category" ||
+              key === "image_url"
+            )
+              return null;
+
+            return (
+              <input
+                key={key}
+                value={form[key]}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    [key]: e.target.value,
+                  })
+                }
+                className="w-full p-4 rounded-2xl bg-black border border-white/10"
+                placeholder={key}
+              />
+            );
+          })}
+
           <input
             type="file"
             accept="image/*"
             onChange={async (e) => {
               const file = e.target.files[0];
+
               if (!file) return;
+
               const fileName = `${Date.now()}-${file.name}`;
-              const { error } = await supabase.storage.from("wines").upload(fileName, file);
-              if (error) { alert(error.message); return; }
-              const { data: { publicUrl } } = supabase.storage.from("wines").getPublicUrl(fileName);
-              setForm({ ...form, image_url: publicUrl });
+
+              const { error } = await supabase.storage
+                .from("wines")
+                .upload(fileName, file);
+
+              if (error) {
+                alert(error.message);
+                return;
+              }
+
+              const {
+                data: { publicUrl },
+              } = supabase.storage
+                .from("wines")
+                .getPublicUrl(fileName);
+
+              setForm({
+                ...form,
+                image_url: publicUrl,
+              });
             }}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           />
 
-          <label className="flex items-center gap-3 cursor-pointer select-none">
+          <label className="flex items-center gap-3">
             <input
               type="checkbox"
               checked={form.featured}
-              onChange={(e) => setForm({ ...form, featured: e.target.checked })}
-              className="w-5 h-5 accent-[#d4a65a] cursor-pointer"
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  featured: e.target.checked,
+                })
+              }
             />
-            <span className="text-white/80 text-lg">⭐ Recomendado (aparece en portada)</span>
+
+            ⭐ Recomendado
           </label>
 
           <button
             disabled={loading}
             className="bg-[#7b1125] px-6 py-4 rounded-2xl"
           >
-            {loading ? "Guardando..." : "Guardar producto"}
+            {loading
+              ? "Guardando..."
+              : editingId
+              ? "Actualizar producto"
+              : "Guardar producto"}
           </button>
         </form>
       </div>
@@ -313,21 +371,26 @@ export default function AdminPage() {
                 className="w-full h-72 object-cover"
               />
             )}
+
             <div className="p-6">
-              <h3 className="text-2xl font-bold text-[#d4a65a]">{wine.name}</h3>
-              <p className="text-white/70 mt-2">{wine.winery}</p>
-              <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={wine.featured || false}
-                  onChange={() => toggleFeatured(wine)}
-                  className="w-5 h-5 accent-[#d4a65a] cursor-pointer"
-                />
-                <span className="text-white/70 text-sm">⭐ Recomendado</span>
-              </label>
+              <h3 className="text-2xl font-bold text-[#d4a65a]">
+                {wine.name}
+              </h3>
+
+              <p className="text-white/70 mt-2">
+                {wine.winery}
+              </p>
+
+              <button
+                onClick={() => editWine(wine)}
+                className="mt-4 bg-[#d4a65a] text-black px-4 py-2 rounded-xl w-full"
+              >
+                Editar
+              </button>
+
               <button
                 onClick={() => deleteWine(wine.id)}
-                className="mt-4 bg-red-700 px-4 py-2 rounded-xl"
+                className="mt-2 bg-red-700 px-4 py-2 rounded-xl w-full"
               >
                 Eliminar
               </button>
