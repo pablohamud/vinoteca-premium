@@ -380,6 +380,17 @@ export default function AdminPage() {
               <p className="text-white/70 mt-2">
                 {wine.winery}
               </p>
+              <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
+  <input
+    type="checkbox"
+    checked={wine.featured || false}
+    onChange={() => toggleFeatured(wine)}
+    className="w-5 h-5 accent-[#d4a65a] cursor-pointer"
+  />
+  <span className="text-white/70 text-sm">
+    ⭐ Recomendado
+  </span>
+</label>
 
               <button
                 onClick={() => editWine(wine)}
