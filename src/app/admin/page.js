@@ -170,6 +170,7 @@ export default function AdminPage() {
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           >
             <option value="vino">🍷 Vino</option>
+            <option value="Membresía">👑Membresía</option>
             <option value="espumante">🥂 Espumante</option>
             <option value="whisky">🥃 Whisky</option>
             <option value="gin">🍸 Gin</option>
@@ -190,7 +191,7 @@ export default function AdminPage() {
             <option value="tabla">🪵 Tabla</option>
             <option value="experiencia">✨ Experiencia</option>
             <option value="fiambre">🥩 Fiambre</option>
-            <option value="club">👑 Club Exclusivo</option>
+            <option value="club">👑 Club de Catas</option>
           </select>
           <input
             value={form.name}
