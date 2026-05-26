@@ -143,12 +143,18 @@ export default function Home() {
             <span className="text-2xl font-bold text-white">
               ${Number(wine.price).toLocaleString()}
             </span>
-            <button
-              onClick={() => addToCart(wine)}
-              className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-4 py-2 rounded-xl transition text-sm"
-            >
-              + Agregar
-            </button>
+            {wine.stock === 0 ? (
+              <span className="bg-red-900/40 border border-red-700/50 text-red-400 text-xs font-bold px-3 py-2 rounded-xl">
+                Sin stock
+              </span>
+            ) : (
+              <button
+                onClick={() => addToCart(wine)}
+                className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-4 py-2 rounded-xl transition text-sm"
+              >
+                + Agregar
+              </button>
+            )}
           </div>
         </div>
       </div>
