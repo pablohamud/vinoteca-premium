@@ -72,12 +72,15 @@ export default function Home() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  function canCheckout() {
+ function canCheckout() {
     if (!deliveryType) return false;
     if (deliveryType === "envio") {
       return deliveryForm.name && deliveryForm.phone && deliveryForm.street && deliveryForm.city;
     }
-    return true;
+    if (deliveryType === "retiro") {
+      return deliveryForm.name && deliveryForm.phone;
+    }
+    return false;
   }
 
   async function handleCheckout() {
@@ -342,8 +345,21 @@ export default function Home() {
                 )}
 
                 {deliveryType === "retiro" && (
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white/60">
-                    📍 Te contactaremos para coordinar el retiro en nuestro local.
+                  <div className="space-y-3">
+                    <p className="text-white/60 text-sm font-semibold">Datos de contacto</p>
+                    {[
+                      { key: "name", placeholder: "Nombre completo *" },
+                      { key: "phone", placeholder: "Teléfono *" },
+                    ].map((field) => (
+                      <input
+                        key={field.key}
+                        placeholder={field.placeholder}
+                        value={deliveryForm[field.key]}
+                        onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
+                        className="w-full p-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4a65a]/50 outline-none text-sm placeholder-white/30"
+                      />
+                    ))}
+                    <p className="text-white/40 text-xs">📍 Te contactaremos para coordinar el retiro.</p>
                   </div>
                 )}
 
