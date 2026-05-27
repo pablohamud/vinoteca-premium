@@ -20,6 +20,17 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
 
+  // Envío
+  const [deliveryType, setDeliveryType] = useState("");
+  const [deliveryForm, setDeliveryForm] = useState({
+    name: "",
+    phone: "",
+    street: "",
+    city: "",
+    province: "",
+    zip: "",
+  });
+
   useEffect(() => {
     fetchWines();
   }, []);
@@ -61,14 +72,27 @@ export default function Home() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  function canCheckout() {
+    if (!deliveryType) return false;
+    if (deliveryType === "envio") {
+      return deliveryForm.name && deliveryForm.phone && deliveryForm.street && deliveryForm.city;
+    }
+    return true;
+  }
+
   async function handleCheckout() {
     if (cart.length === 0) return;
+    if (!canCheckout()) return;
     setLoadingPayment(true);
     try {
       const response = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cart }),
+        body: JSON.stringify({
+          items: cart,
+          deliveryType,
+          deliveryForm: deliveryType === "envio" ? deliveryForm : null,
+        }),
       });
       const data = await response.json();
       if (data.init_point) {
@@ -100,11 +124,7 @@ export default function Home() {
       <div className="group relative bg-[#0d0d0d] border border-[#d4a65a]/20 rounded-2xl overflow-hidden hover:border-[#d4a65a]/60 transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,166,90,0.15)] flex flex-col">
         <div className="relative overflow-hidden">
           {wine.image_url ? (
-            <img
-              src={wine.image_url}
-              alt={wine.name}
-              className="w-full h-72 object-cover group-hover:scale-105 transition duration-500"
-            />
+            <img src={wine.image_url} alt={wine.name} className="w-full h-72 object-cover group-hover:scale-105 transition duration-500" />
           ) : (
             <div className="w-full h-72 bg-[#1a1a1a] flex items-center justify-center">
               <span className="text-6xl opacity-20">🍷</span>
@@ -121,37 +141,24 @@ export default function Home() {
           {wine.winery && <p className="text-white/50 text-sm mt-1">{wine.winery}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
             {wine.varietal && (
-              <span className="text-xs bg-[#7b1125]/40 border border-[#7b1125]/50 text-white/80 px-2 py-1 rounded-full">
-                {wine.varietal}
-              </span>
+              <span className="text-xs bg-[#7b1125]/40 border border-[#7b1125]/50 text-white/80 px-2 py-1 rounded-full">{wine.varietal}</span>
             )}
             {wine.vintage && (
-              <span className="text-xs bg-white/5 border border-white/10 text-white/60 px-2 py-1 rounded-full">
-                {wine.vintage}
-              </span>
+              <span className="text-xs bg-white/5 border border-white/10 text-white/60 px-2 py-1 rounded-full">{wine.vintage}</span>
             )}
             {wine.terroir && (
-              <span className="text-xs bg-white/5 border border-white/10 text-white/60 px-2 py-1 rounded-full">
-                {wine.terroir}
-              </span>
+              <span className="text-xs bg-white/5 border border-white/10 text-white/60 px-2 py-1 rounded-full">{wine.terroir}</span>
             )}
           </div>
           {wine.tasting_notes && (
             <p className="mt-3 text-white/40 text-xs line-clamp-2">{wine.tasting_notes}</p>
           )}
           <div className="mt-auto pt-4 flex justify-between items-center">
-            <span className="text-2xl font-bold text-white">
-              ${Number(wine.price).toLocaleString()}
-            </span>
+            <span className="text-2xl font-bold text-white">${Number(wine.price).toLocaleString()}</span>
             {wine.stock === 0 ? (
-              <span className="bg-red-900/40 border border-red-700/50 text-red-400 text-xs font-bold px-3 py-2 rounded-xl">
-                Sin stock
-              </span>
+              <span className="bg-red-900/40 border border-red-700/50 text-red-400 text-xs font-bold px-3 py-2 rounded-xl">Sin stock</span>
             ) : (
-              <button
-                onClick={() => addToCart(wine)}
-                className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-4 py-2 rounded-xl transition text-sm"
-              >
+              <button onClick={() => addToCart(wine)} className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-4 py-2 rounded-xl transition text-sm">
                 + Agregar
               </button>
             )}
@@ -163,11 +170,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#080808] text-white">
-
       {/* NAVBAR */}
       <nav className="border-b border-[#d4a65a]/20 bg-[#080808]/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          {/* LOGO */}
           <div className="flex items-center gap-4">
             <Image src="/logo.png" alt="Escudo del Cellar" width={50} height={50} className="object-contain" />
             <div>
@@ -175,32 +180,13 @@ export default function Home() {
               <p className="text-white/30 text-xs tracking-widest uppercase">Guardianes del Vino</p>
             </div>
           </div>
-
-          {/* NAV LINKS + CARRITO */}
           <div className="flex items-center gap-4">
-            <a
-              href="https://escudowines.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block"
-            >
-              🌐 EscudoWines
-            </a>
-            <a
-              href="/club"
-              className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block"
-            >
-              👑 Club de Catas
-            </a>
-            <button
-              onClick={() => setCartOpen(true)}
-              className="relative bg-[#7b1125] hover:bg-[#9b1535] transition px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2"
-            >
+            <a href="https://escudowines.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block">🌐 EscudoWines</a>
+            <a href="/club" className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block">👑 Club de Catas</a>
+            <button onClick={() => setCartOpen(true)} className="relative bg-[#7b1125] hover:bg-[#9b1535] transition px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2">
               🛒 <span className="hidden md:inline">Carrito</span>
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#d4a65a] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
+                <span className="absolute -top-2 -right-2 bg-[#d4a65a] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{cartCount}</span>
               )}
             </button>
           </div>
@@ -212,15 +198,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(123,17,37,0.15)_0%,_transparent_70%)]" />
         <div className="relative max-w-3xl mx-auto">
           <p className="text-[#d4a65a]/60 text-sm tracking-[0.3em] uppercase mb-4">Bienvenido a</p>
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">
-            Vinoteca <span className="text-[#d4a65a]">Premium</span>
-          </h2>
+          <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">Vinoteca <span className="text-[#d4a65a]">Premium</span></h2>
           <p className="text-white/40 text-lg">Selección exclusiva de vinos y productos premium</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
-
         {/* FILTROS */}
         <div className="grid md:grid-cols-4 gap-3 mb-12">
           {[
@@ -229,11 +212,7 @@ export default function Home() {
             { placeholder: "🗺️ Terroir", value: terroir, setter: setTerroir, type: "text" },
             { placeholder: "💰 Precio máximo", value: maxPrice, setter: setMaxPrice, type: "number" },
           ].map((filter, i) => (
-            <input
-              key={i}
-              type={filter.type}
-              placeholder={filter.placeholder}
-              value={filter.value}
+            <input key={i} type={filter.type} placeholder={filter.placeholder} value={filter.value}
               onChange={(e) => filter.setter(e.target.value)}
               className="p-3.5 rounded-xl bg-white/5 border border-[#d4a65a]/20 outline-none focus:border-[#d4a65a]/50 transition text-sm placeholder-white/30"
             />
@@ -244,16 +223,13 @@ export default function Home() {
         {hasFilters ? (
           <>
             <h2 className="text-2xl font-bold text-white/70 mb-8 flex items-center gap-3">
-              <span className="w-8 h-px bg-[#d4a65a]"></span>
-              Resultados de búsqueda
+              <span className="w-8 h-px bg-[#d4a65a]"></span>Resultados de búsqueda
             </h2>
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredWines.map((wine) => <WineCard key={wine.id} wine={wine} />)}
             </div>
             {filteredWines.length === 0 && (
-              <div className="text-center mt-20 text-white/30 text-xl">
-                No se encontraron productos 🍷
-              </div>
+              <div className="text-center mt-20 text-white/30 text-xl">No se encontraron productos 🍷</div>
             )}
           </>
         ) : (
@@ -261,17 +237,14 @@ export default function Home() {
             {featuredWines.length > 0 ? (
               <>
                 <h2 className="text-2xl font-bold text-[#d4a65a] mb-8 flex items-center gap-3">
-                  <span className="w-8 h-px bg-[#d4a65a]"></span>
-                  Selección Destacada
+                  <span className="w-8 h-px bg-[#d4a65a]"></span>Selección Destacada
                 </h2>
                 <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {featuredWines.map((wine) => <WineCard key={wine.id} wine={wine} />)}
                 </div>
               </>
             ) : (
-              <div className="text-center mt-20 text-white/30 text-xl">
-                Usá el buscador para encontrar productos 🍷
-              </div>
+              <div className="text-center mt-20 text-white/30 text-xl">Usá el buscador para encontrar productos 🍷</div>
             )}
           </>
         )}
@@ -298,9 +271,7 @@ export default function Home() {
               ) : (
                 cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 bg-white/5 rounded-xl p-4 border border-white/5">
-                    {item.image_url && (
-                      <img src={item.image_url} alt={item.name} className="w-14 h-14 object-cover rounded-lg" />
-                    )}
+                    {item.image_url && <img src={item.image_url} alt={item.name} className="w-14 h-14 object-cover rounded-lg" />}
                     <div className="flex-1">
                       <p className="font-semibold text-[#d4a65a] text-sm">{item.name}</p>
                       <p className="text-white/40 text-xs">{item.winery}</p>
@@ -318,17 +289,75 @@ export default function Home() {
             </div>
 
             {cart.length > 0 && (
-              <div className="p-6 border-t border-[#d4a65a]/20">
-                <div className="flex justify-between text-lg font-bold mb-6">
+              <div className="p-6 border-t border-[#d4a65a]/20 space-y-4">
+
+                {/* OPCIONES DE ENTREGA */}
+                <div>
+                  <p className="text-white/60 text-sm mb-3 font-semibold">¿Cómo querés recibirlo?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setDeliveryType("retiro")}
+                      className={`py-3 rounded-xl text-sm font-semibold border transition ${
+                        deliveryType === "retiro"
+                          ? "bg-[#d4a65a] text-black border-[#d4a65a]"
+                          : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"
+                      }`}
+                    >
+                      🏪 Retiro en local
+                    </button>
+                    <button
+                      onClick={() => setDeliveryType("envio")}
+                      className={`py-3 rounded-xl text-sm font-semibold border transition ${
+                        deliveryType === "envio"
+                          ? "bg-[#d4a65a] text-black border-[#d4a65a]"
+                          : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"
+                      }`}
+                    >
+                      🚚 Envío a domicilio
+                    </button>
+                  </div>
+                </div>
+
+                {/* FORMULARIO DE ENVÍO */}
+                {deliveryType === "envio" && (
+                  <div className="space-y-3">
+                    <p className="text-white/60 text-sm font-semibold">Datos de envío</p>
+                    {[
+                      { key: "name", placeholder: "Nombre completo *" },
+                      { key: "phone", placeholder: "Teléfono *" },
+                      { key: "street", placeholder: "Calle y número *" },
+                      { key: "city", placeholder: "Ciudad *" },
+                      { key: "province", placeholder: "Provincia" },
+                      { key: "zip", placeholder: "Código postal" },
+                    ].map((field) => (
+                      <input
+                        key={field.key}
+                        placeholder={field.placeholder}
+                        value={deliveryForm[field.key]}
+                        onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
+                        className="w-full p-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4a65a]/50 outline-none text-sm placeholder-white/30"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {deliveryType === "retiro" && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white/60">
+                    📍 Te contactaremos para coordinar el retiro en nuestro local.
+                  </div>
+                )}
+
+                {/* TOTAL Y PAGO */}
+                <div className="flex justify-between text-lg font-bold">
                   <span className="text-white/60">Total</span>
                   <span className="text-[#d4a65a]">${cartTotal.toLocaleString()}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
-                  disabled={loadingPayment}
-                  className="w-full bg-[#009ee3] hover:bg-[#007ec0] text-white font-bold py-4 rounded-xl transition text-base disabled:opacity-60"
+                  disabled={loadingPayment || !canCheckout()}
+                  className="w-full bg-[#009ee3] hover:bg-[#007ec0] text-white font-bold py-4 rounded-xl transition text-base disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {loadingPayment ? "Redirigiendo..." : "Pagar con Mercado Pago"}
+                  {loadingPayment ? "Redirigiendo..." : !deliveryType ? "Elegí una opción de entrega" : "Pagar con Mercado Pago"}
                 </button>
               </div>
             )}
