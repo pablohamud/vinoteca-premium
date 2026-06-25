@@ -9,7 +9,6 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    // MercadoPago envía el tipo de notificación
     if (body.type !== "payment") {
       return Response.json({ received: true });
     }
@@ -17,7 +16,6 @@ export async function POST(request) {
     const paymentId = body.data?.id;
     if (!paymentId) return Response.json({ received: true });
 
-    // Consultar el pago a MP
     const mpResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
@@ -33,7 +31,23 @@ export async function POST(request) {
       return Response.json({ error: "Payment not found" }, { status: 400 });
     }
 
-    // Guardar el pedido en Supabase
+    // Solo procesar pagos aprobados
+    if (payment.status !== "approved") {
+      return Response.json({ received: true, status: payment.status });
+    }
+
+    // Verificar que no se procesó antes
+    const { data: existing } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("mp_payment_id", String(paymentId))
+      .maybeSingle();
+
+    if (existing) {
+      return Response.json({ received: true, duplicate: true });
+    }
+
+    // Guardar el pedido
     const { error } = await supabase.from("orders").insert([{
       mp_payment_id: String(paymentId),
       mp_status: payment.status,
@@ -47,6 +61,24 @@ export async function POST(request) {
     if (error) {
       console.error("Supabase error:", error);
       return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    // Descontar stock por cada item vendido
+    const items = payment.additional_info?.items || [];
+    for (const item of items) {
+      const { data: wine } = await supabase
+        .from("wines")
+        .select("stock")
+        .eq("id", item.id)
+        .maybeSingle();
+
+      if (wine) {
+        const newStock = Math.max(0, (wine.stock || 0) - Number(item.quantity));
+        await supabase
+          .from("wines")
+          .update({ stock: newStock })
+          .eq("id", item.id);
+      }
     }
 
     return Response.json({ received: true });
