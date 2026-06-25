@@ -35,7 +35,7 @@ export async function POST(request) {
           pending: `${process.env.NEXT_PUBLIC_BASE_URL}/pago/pendiente`,
         },
         auto_return: "approved",
-        statement_descriptor: "VINOTECA PREMIUM",
+        statement_descriptor: process.env.NEXT_PUBLIC_STORE_NAME,
         external_reference: `order-${Date.now()}`,
       },
     });

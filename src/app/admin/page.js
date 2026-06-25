@@ -182,7 +182,7 @@ export default function AdminPage() {
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-5xl font-bold text-[#d4a65a]">Panel Administrador</h1>
         <div className="flex gap-3">
-          <a href="https://escudowines.com" target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-white/20 transition px-5 py-2 rounded-xl text-sm">🌐 EscudoWines</a>
+          <a href={process.env.NEXT_PUBLIC_STORE_WEBSITE} target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-white/20 transition px-5 py-2 rounded-xl text-sm">🌐 Sitio web</a>
           <a href="/admin/planes" className="bg-[#d4a65a] hover:bg-[#e6b96a] text-black font-bold px-5 py-2 rounded-xl text-sm transition">👑 Planes del Club</a>
 <a href="/admin/pedidos" className="bg-white/10 hover:bg-white/20 transition px-5 py-2 rounded-xl text-sm">📦 Pedidos</a>
           <button onClick={logout} className="bg-red-700 px-4 py-2 rounded-xl">Salir</button>

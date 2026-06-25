@@ -20,7 +20,6 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
 
-  // Envío
   const [deliveryType, setDeliveryType] = useState("");
   const [deliveryForm, setDeliveryForm] = useState({
     name: "",
@@ -72,7 +71,7 @@ export default function Home() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
- function canCheckout() {
+  function canCheckout() {
     if (!deliveryType) return false;
     if (deliveryType === "envio") {
       return deliveryForm.name && deliveryForm.phone && deliveryForm.street && deliveryForm.city;
@@ -177,14 +176,14 @@ export default function Home() {
       <nav className="border-b border-[#d4a65a]/20 bg-[#080808]/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Image src="/logo.png" alt="Escudo del Cellar" width={50} height={50} className="object-contain" />
+            <Image src="/logo.png" alt={process.env.NEXT_PUBLIC_STORE_NAME} width={50} height={50} className="object-contain" />
             <div>
-              <h1 className="text-xl font-bold text-[#d4a65a] tracking-widest uppercase">Escudo del Cellar</h1>
-              <p className="text-white/30 text-xs tracking-widest uppercase">Guardianes del Vino</p>
+              <h1 className="text-xl font-bold text-[#d4a65a] tracking-widest uppercase">{process.env.NEXT_PUBLIC_STORE_NAME}</h1>
+              <p className="text-white/30 text-xs tracking-widest uppercase">{process.env.NEXT_PUBLIC_STORE_TAGLINE}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <a href="https://escudowines.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block">🌐 EscudoWines</a>
+            <a href={process.env.NEXT_PUBLIC_STORE_WEBSITE} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block">🌐 Sitio web</a>
             <a href="/club" className="text-white/40 hover:text-[#d4a65a] transition text-sm hidden md:block">👑 Club de Catas</a>
             <button onClick={() => setCartOpen(true)} className="relative bg-[#7b1125] hover:bg-[#9b1535] transition px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2">
               🛒 <span className="hidden md:inline">Carrito</span>
@@ -201,13 +200,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(123,17,37,0.15)_0%,_transparent_70%)]" />
         <div className="relative max-w-3xl mx-auto">
           <p className="text-[#d4a65a]/60 text-sm tracking-[0.3em] uppercase mb-4">Bienvenido a</p>
-          <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">Vinoteca <span className="text-[#d4a65a]">Premium</span></h2>
-          <p className="text-white/40 text-lg">Selección exclusiva de vinos y productos premium</p>
+          <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">{process.env.NEXT_PUBLIC_STORE_NAME}</h2>
+          <p className="text-white/40 text-lg">{process.env.NEXT_PUBLIC_STORE_TAGLINE}</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* FILTROS */}
         <div className="grid md:grid-cols-4 gap-3 mb-12">
           {[
             { placeholder: "🔍 Buscar producto", value: search, setter: setSearch, type: "text" },
@@ -222,7 +220,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* CONTENIDO */}
         {hasFilters ? (
           <>
             <h2 className="text-2xl font-bold text-white/70 mb-8 flex items-center gap-3">
@@ -255,7 +252,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="border-t border-[#d4a65a]/10 mt-20 py-8 text-center text-white/20 text-sm">
-        <p>© 2026 Escudo del Cellar — Guardianes del Vino</p>
+        <p>{process.env.NEXT_PUBLIC_STORE_FOOTER}</p>
       </footer>
 
       {/* DRAWER CARRITO */}
@@ -267,7 +264,6 @@ export default function Home() {
               <h2 className="text-xl font-bold text-[#d4a65a]">Tu carrito 🛒</h2>
               <button onClick={() => setCartOpen(false)} className="text-white/30 hover:text-white text-2xl">✕</button>
             </div>
-
             <div className="flex-1 p-6 space-y-4">
               {cart.length === 0 ? (
                 <p className="text-white/30 text-center mt-10">El carrito está vacío</p>
@@ -290,38 +286,19 @@ export default function Home() {
                 ))
               )}
             </div>
-
             {cart.length > 0 && (
               <div className="p-6 border-t border-[#d4a65a]/20 space-y-4">
-
-                {/* OPCIONES DE ENTREGA */}
                 <div>
                   <p className="text-white/60 text-sm mb-3 font-semibold">¿Cómo querés recibirlo?</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setDeliveryType("retiro")}
-                      className={`py-3 rounded-xl text-sm font-semibold border transition ${
-                        deliveryType === "retiro"
-                          ? "bg-[#d4a65a] text-black border-[#d4a65a]"
-                          : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"
-                      }`}
-                    >
+                    <button onClick={() => setDeliveryType("retiro")} className={`py-3 rounded-xl text-sm font-semibold border transition ${deliveryType === "retiro" ? "bg-[#d4a65a] text-black border-[#d4a65a]" : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"}`}>
                       🏪 Retiro en local
                     </button>
-                    <button
-                      onClick={() => setDeliveryType("envio")}
-                      className={`py-3 rounded-xl text-sm font-semibold border transition ${
-                        deliveryType === "envio"
-                          ? "bg-[#d4a65a] text-black border-[#d4a65a]"
-                          : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"
-                      }`}
-                    >
+                    <button onClick={() => setDeliveryType("envio")} className={`py-3 rounded-xl text-sm font-semibold border transition ${deliveryType === "envio" ? "bg-[#d4a65a] text-black border-[#d4a65a]" : "bg-white/5 border-white/10 hover:border-[#d4a65a]/40"}`}>
                       🚚 Envío a domicilio
                     </button>
                   </div>
                 </div>
-
-                {/* FORMULARIO DE ENVÍO */}
                 {deliveryType === "envio" && (
                   <div className="space-y-3">
                     <p className="text-white/60 text-sm font-semibold">Datos de envío</p>
@@ -333,17 +310,13 @@ export default function Home() {
                       { key: "province", placeholder: "Provincia" },
                       { key: "zip", placeholder: "Código postal" },
                     ].map((field) => (
-                      <input
-                        key={field.key}
-                        placeholder={field.placeholder}
-                        value={deliveryForm[field.key]}
+                      <input key={field.key} placeholder={field.placeholder} value={deliveryForm[field.key]}
                         onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
                         className="w-full p-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4a65a]/50 outline-none text-sm placeholder-white/30"
                       />
                     ))}
                   </div>
                 )}
-
                 {deliveryType === "retiro" && (
                   <div className="space-y-3">
                     <p className="text-white/60 text-sm font-semibold">Datos de contacto</p>
@@ -351,10 +324,7 @@ export default function Home() {
                       { key: "name", placeholder: "Nombre completo *" },
                       { key: "phone", placeholder: "Teléfono *" },
                     ].map((field) => (
-                      <input
-                        key={field.key}
-                        placeholder={field.placeholder}
-                        value={deliveryForm[field.key]}
+                      <input key={field.key} placeholder={field.placeholder} value={deliveryForm[field.key]}
                         onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
                         className="w-full p-3 rounded-xl bg-white/5 border border-white/10 focus:border-[#d4a65a]/50 outline-none text-sm placeholder-white/30"
                       />
@@ -362,17 +332,12 @@ export default function Home() {
                     <p className="text-white/40 text-xs">📍 Te contactaremos para coordinar el retiro.</p>
                   </div>
                 )}
-
-                {/* TOTAL Y PAGO */}
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-white/60">Total</span>
                   <span className="text-[#d4a65a]">${cartTotal.toLocaleString()}</span>
                 </div>
-                <button
-                  onClick={handleCheckout}
-                  disabled={loadingPayment || !canCheckout()}
-                  className="w-full bg-[#009ee3] hover:bg-[#007ec0] text-white font-bold py-4 rounded-xl transition text-base disabled:opacity-40 disabled:cursor-not-allowed"
-                >
+                <button onClick={handleCheckout} disabled={loadingPayment || !canCheckout()}
+                  className="w-full bg-[#009ee3] hover:bg-[#007ec0] text-white font-bold py-4 rounded-xl transition text-base disabled:opacity-40 disabled:cursor-not-allowed">
                   {loadingPayment ? "Redirigiendo..." : !deliveryType ? "Elegí una opción de entrega" : "Pagar con Mercado Pago"}
                 </button>
               </div>
