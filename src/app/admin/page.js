@@ -228,7 +228,8 @@ export default function AdminPage() {
             onChange={async (e) => {
               const file = e.target.files[0];
               if (!file) return;
-              const fileName = `${Date.now()}-${file.name}`;
+              const ext = file.name.split(".").pop();
+              const fileName = `${Date.now()}.${ext}`;
               const { error } = await supabase.storage.from("wines").upload(fileName, file);
               if (error) { alert(error.message); return; }
               const { data: { publicUrl } } = supabase.storage.from("wines").getPublicUrl(fileName);
