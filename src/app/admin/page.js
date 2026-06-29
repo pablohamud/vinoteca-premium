@@ -232,7 +232,7 @@ export default function AdminPage() {
               const { error } = await supabase.storage.from("wines").upload(fileName, file);
               if (error) { alert(error.message); return; }
               const { data: { publicUrl } } = supabase.storage.from("wines").getPublicUrl(fileName);
-              setForm({ ...form, image_url: publicUrl });
+              setForm(prev => ({ ...prev, image_url: publicUrl }));
             }}
             className="w-full p-4 rounded-2xl bg-black border border-white/10"
           />
