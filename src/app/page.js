@@ -24,6 +24,7 @@ export default function Home() {
   const [deliveryForm, setDeliveryForm] = useState({
     name: "",
     phone: "",
+    email: "",
     street: "",
     city: "",
     province: "",
@@ -74,10 +75,10 @@ export default function Home() {
   function canCheckout() {
     if (!deliveryType) return false;
     if (deliveryType === "envio") {
-      return deliveryForm.name && deliveryForm.phone && deliveryForm.street && deliveryForm.city;
+      return deliveryForm.name && deliveryForm.phone && deliveryForm.email && deliveryForm.street && deliveryForm.city;
     }
     if (deliveryType === "retiro") {
-      return deliveryForm.name && deliveryForm.phone;
+      return deliveryForm.name && deliveryForm.phone && deliveryForm.email;
     }
     return false;
   }
@@ -85,6 +86,13 @@ export default function Home() {
   async function handleCheckout() {
     if (cart.length === 0) return;
     if (!canCheckout()) return;
+    // Guardar carrito abandonado
+await supabase.from("abandoned_carts").insert([{
+  email: deliveryForm.email,
+  name: deliveryForm.name,
+  items: cart,
+  total: cartTotal,
+}]);
     setLoadingPayment(true);
     try {
       const response = await fetch("/api/create-payment", {
@@ -304,11 +312,12 @@ export default function Home() {
                     <p className="text-white/60 text-sm font-semibold">Datos de envío</p>
                     {[
                       { key: "name", placeholder: "Nombre completo *" },
-                      { key: "phone", placeholder: "Teléfono *" },
-                      { key: "street", placeholder: "Calle y número *" },
-                      { key: "city", placeholder: "Ciudad *" },
-                      { key: "province", placeholder: "Provincia" },
-                      { key: "zip", placeholder: "Código postal" },
+{ key: "phone", placeholder: "Teléfono *" },
+{ key: "email", placeholder: "Email *" },
+{ key: "street", placeholder: "Calle y número *" },
+{ key: "city", placeholder: "Ciudad *" },
+{ key: "province", placeholder: "Provincia" },
+{ key: "zip", placeholder: "Código postal" },
                     ].map((field) => (
                       <input key={field.key} placeholder={field.placeholder} value={deliveryForm[field.key]}
                         onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
@@ -322,7 +331,8 @@ export default function Home() {
                     <p className="text-white/60 text-sm font-semibold">Datos de contacto</p>
                     {[
                       { key: "name", placeholder: "Nombre completo *" },
-                      { key: "phone", placeholder: "Teléfono *" },
+{ key: "phone", placeholder: "Teléfono *" },
+{ key: "email", placeholder: "Email *" },
                     ].map((field) => (
                       <input key={field.key} placeholder={field.placeholder} value={deliveryForm[field.key]}
                         onChange={(e) => setDeliveryForm({ ...deliveryForm, [field.key]: e.target.value })}
